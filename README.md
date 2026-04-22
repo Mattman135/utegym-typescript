@@ -3,7 +3,7 @@
 ## Lathund
 
 ```
-    git clone https://github.com/Mattman135/hundrastg-rdar-typescript [YOUR_APP_NAME]
+    git clone https://github.com/Mattman135/dirTS-blueprint [YOUR_APP_NAME]
     cd [YOUR_APP_NAME]
     git checkout supabase
     npm install
