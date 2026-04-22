@@ -2,12 +2,12 @@ import { ConfigProps } from "./types/config";
 
 const config = {
   // REQUIRED
-  appName: "Hundrastgårdar i Sverige",
+  appName: "Directory blueprint",
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
   appDescription:
-    "Sveriges enda webbkatalog hundrastgårdar för att hitta hundrastgårdar i Sverige - skapad för att göra det enkelt för hundägare att rasta sina hundar.",
+    "Directory blueprint",
   // REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-  domainName: "shipfa.st",
+  domainName: "directorybluepri.nt",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",
