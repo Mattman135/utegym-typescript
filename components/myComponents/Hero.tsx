@@ -5,24 +5,28 @@ import config from "@/config"
 import { createClient } from "@/libs/supabase/client"
 
 import CardsSection from "./CardsSection"
-import { type HundrastgardarItem } from "./CardComponent"
+import { type dataItem } from "./CardComponent"
 
 const Hero = () => {
+  // change name of data table here
+  const data_table_name = "example-lekplats-data"
+
+  // 
   const [searchTerm, setSearchTerm] = useState("")
   const [suggestions, setSuggestions] = useState<string[]>([])
-  const [allItems, setAllItems] = useState<HundrastgardarItem[]>([])
-  const [filteredItems, setFilteredItems] = useState<HundrastgardarItem[]>([])
+  const [allItems, setAllItems] = useState<dataItem[]>([])
+  const [filteredItems, setFilteredItems] = useState<dataItem[]>([])
 
   useEffect(() => {
     const fetchItems = async () => {
       const supabase = createClient()
       const { data, error } = await supabase
-        .from("hundrastgårdar")
+        .from(data_table_name)
         .select("*")
         .order("title", { ascending: true })
 
       if (error) {
-        console.error("Failed to fetch hundrastgårdar:", error.message)
+        console.error(`Failed to fetch ${data_table_name}:`, error.message)
         setAllItems([])
         setFilteredItems([])
         return

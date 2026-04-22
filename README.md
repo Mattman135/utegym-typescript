@@ -23,6 +23,9 @@
 ```
 
 - Skapa supabase konto och ändra environment variabler (env.local) till rätt projekt
-- Ändra namnet på databasen i hero.
-- Ändra HundrastgardarItem i CardComponent.tsx så att det passar
-- 
+- Lägg till SELECT RLS policy
+- Ändra namnet på databasen i hero data_table_name
+- Byt icon.png och favicon.ico i app folder
+- Ändra public/DogParkIcon.jpg till en passande bild
+- Konfigurera config.js
+- Ändra FAQ sektion

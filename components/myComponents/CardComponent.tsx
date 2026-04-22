@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 
-export interface HundrastgardarItem {
+export interface dataItem {
   id?: string | number
   title?: string
   category?: string
@@ -19,7 +19,7 @@ export interface HundrastgardarItem {
 }
 
 interface CardComponentProps {
-  item: HundrastgardarItem
+  item: dataItem
 }
 
 const CardComponent = ({ item }: CardComponentProps) => {

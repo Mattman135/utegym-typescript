@@ -12,7 +12,7 @@ interface OpeningHours {
   sunday?: string
 }
 
-interface HundrastgardarItem {
+interface dataItem {
   title?: string
   category?: string
   categoryName?: string
@@ -50,16 +50,20 @@ const parseNumber = (value: number | string | undefined): number => {
 }
 
 export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
+  // change name of data table here
+  const data_table_name = "example-lekplats-data"
+
+  // 
   const { item: encodedItemName } = await params
   const itemName = decodeURIComponent(encodedItemName)
 
   const supabase = await createClient()
   const { data, error } = await supabase
-    .from("hundrastgårdar")
+    .from(data_table_name)
     .select("*")
     .order("title", { ascending: true })
 
-  const items = (data ?? []) as HundrastgardarItem[]
+  const items = (data ?? []) as dataItem[]
 
   // Find item by title (what you use in the card link)
   const foundItem = items.find((entry) => {
