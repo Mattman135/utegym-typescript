@@ -2,12 +2,12 @@ import { ConfigProps } from "./types/config";
 
 const config = {
   // REQUIRED
-  appName: "Directory blueprint",
+  appName: "Utegym",
   // REQUIRED: a short description of your app for SEO tags (can be overwritten)
   appDescription:
-    "Directory blueprint",
+    "Utegym webbkatalog",
   // REQUIRED (no https://, not trialing slash at the end, just the naked domain)
-  domainName: "directorybluepri.nt",
+  domainName: "utegymnäramig.se",
   crisp: {
     // Crisp website ID. IF YOU DON'T USE CRISP: just remove this => Then add a support email in this config file (resend.supportEmail) otherwise customer support won't work.
     id: "",

@@ -26,6 +26,6 @@
 - Lägg till SELECT RLS policy
 - Ändra namnet på databasen i hero data_table_name
 - Byt icon.png och favicon.ico i app folder
-- Ändra public/DogParkIcon.jpg till en passande bild
-- Konfigurera config.js
+- Ändra public/DogParkIcon.jpg till en passande bild och ändra i CardComponent.tsx imageUrl
+- Konfigurera config.ts
 - Ändra FAQ sektion

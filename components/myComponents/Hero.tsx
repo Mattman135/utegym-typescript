@@ -9,7 +9,7 @@ import { type dataItem } from "./CardComponent"
 
 const Hero = () => {
   // change name of data table here
-  const data_table_name = "example-lekplats-data"
+  const data_table_name = "utegym_data"
 
   // 
   const [searchTerm, setSearchTerm] = useState("")

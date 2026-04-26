@@ -51,7 +51,7 @@ const parseNumber = (value: number | string | undefined): number => {
 
 export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
   // change name of data table here
-  const data_table_name = "example-lekplats-data"
+  const data_table_name = "utegym_data"
 
   // 
   const { item: encodedItemName } = await params

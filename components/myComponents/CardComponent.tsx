@@ -57,7 +57,7 @@ const CardComponent = ({ item }: CardComponentProps) => {
 
   // Basic fields
   const title = item["title"] ?? "Missing title"
-  const imageUrl = "/DogParkIcon.jpg" // served from /public
+  const imageUrl = "/icon.jpg" // served from /public
   //const category =
     //item["category"] ?? item["categoryName"] ?? "Missing category"
 
