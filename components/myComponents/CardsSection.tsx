@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 
-import CardComponent, { type HundrastgardarItem } from "./CardComponent"
+import CardComponent, { type dataItem } from "./CardComponent"
 
 interface CardsSectionProps {
-  items: HundrastgardarItem[]
+  items: dataItem[]
 }
 
 const CardsSection = ({ items }: CardsSectionProps) => {
