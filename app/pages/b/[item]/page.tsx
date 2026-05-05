@@ -1,5 +1,6 @@
 import Header from "@/components/myComponents/Header"
 import Footer from "@/components/myComponents/Footer"
+import RecensionSystem from "@/components/myComponents/RecensionSystem"
 import { createClient } from "@/libs/supabase/server"
 
 interface OpeningHours {
@@ -58,6 +59,9 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
   const itemName = decodeURIComponent(encodedItemName)
 
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   const { data, error } = await supabase
     .from(data_table_name)
     .select("*")
@@ -344,7 +348,11 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
           </div>
         </div>
       </div>
-
+      <RecensionSystem
+        userId={user?.id}
+        userName={user?.user_metadata?.name ?? user?.email ?? null}
+        utegymName={foundItem.title ?? "Unknown utegym"}
+      />
       <Footer />
     </main>
   )
