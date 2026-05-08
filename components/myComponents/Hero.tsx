@@ -113,7 +113,7 @@ const Hero = () => {
               Hitta {config.appName} <br></br> nära dig
             </h1>
           </div>
-          <div className="max-w-100">Hitta hundrastgårdar i hela Sverige genom att söka efter din stad. Få relevant information om varje rastgård så att du enkelt kan hitta en plats som passar dig och din hund. Sveriges enda webbkatalog för hundrastgårdar - skapad för att göra det enkelt för hundägare att rasta sina hundar.</div>
+          <div className="max-w-100">Hitta utegym i hela Sverige genom att söka efter din stad. Få relevant information om varje utegym så att du enkelt kan hitta ett gym som passar dig. Sveriges enda webbkatalog för utegym - skapad för att göra det enkelt för dig att hitta ett gym som passar dig.</div>
           <div className="relative w-full max-w-xs">
             <label className="input">
               <svg
