@@ -1,27 +1,22 @@
 import { createClient } from "@/libs/supabase/server"
+import { DataItem, ItemDetailViewModel } from "@/types/item-details"
 
-export class ItemRepository {
-  private tableName: string
+const TABLE_NAME = "utegym_data"
 
-  constructor(tableName: string = "utegym_data") {
-    this.tableName = tableName
+export async function getUtegymByTitle(
+  title: string,
+): Promise<DataItem | null> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from(TABLE_NAME)
+    .select("*")
+    .ilike("title", title)
+    .single()
+
+  if (error || !data) {
+    return null
   }
 
-  /**
-   * Fetch all items from the database
-   */
-  async getAllItems() {
-    const supabase = await createClient()
-    
-    const { data, error } = await supabase
-      .from(this.tableName)
-      .select("*")
-      .order("title", { ascending: true })
-
-    if (error) {
-      throw new Error(`Failed to fetch items: ${error.message}`)
-    }
-
-    return data ?? []
-  }
+  return data as DataItem
 }

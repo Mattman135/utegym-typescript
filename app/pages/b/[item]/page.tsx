@@ -1,94 +1,46 @@
 import Header from "@/components/myComponents/Header"
 import Footer from "@/components/myComponents/Footer"
 import RecensionSystem from "@/components/myComponents/RecensionSystem"
-import { createClient } from "@/libs/supabase/server"
 
-import { dataItem, OpeningHours } from "@/types/item-details"
-
+import { getItemDetailPageData } from "@/controllers/item-detail.controller"
 
 interface ItemDetailPageProps {
   params: Promise<{ item: string }>
 }
 
-const parseNumber = (value: number | string | undefined): number => {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value
-  }
+export default async function ItemDetailPage({
+  params,
+}: ItemDetailPageProps) {
+  const { item } = await params
 
-  if (typeof value === "string") {
-    const normalizedValue = value.trim().replace(",", ".")
-    const parsedValue = Number(normalizedValue)
-    if (Number.isFinite(parsedValue)) {
-      return parsedValue
-    }
-  }
-
-  return 0
-}
-
-export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
-  // change name of data table here
-  const data_table_name = "utegym_data"
-
-  // 
-  const { item: encodedItemName } = await params
-  const itemName = decodeURIComponent(encodedItemName)
-
-  const supabase = await createClient()
   const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  const { data, error } = await supabase
-    .from(data_table_name)
-    .select("*")
-    .order("title", { ascending: true })
+    user,
+    itemVm,
+    errorType,
+  } = await getItemDetailPageData(item)
 
-  const items = (data ?? []) as dataItem[]
-
-  // Find item by title (what you use in the card link)
-  const foundItem = items.find((entry) => {
-    if (!entry.title) return false
-    return entry.title.toLowerCase() === itemName.toLowerCase()
-  })
-
-  if (error || !foundItem) {
+  if (errorType || !itemVm) {
     return (
       <main className="p-4">
         <Header />
+
         <div className="max-w-4xl mx-auto py-8">
           <h1 className="text-2xl font-bold">
-            Hittade inte något för &quot;{itemName}&quot;
+            Hittade inte något för &quot;{decodeURIComponent(item)}&quot;
           </h1>
-          {error && (
-            <p className="mt-2 text-sm text-base-content/60">
-              Kunde inte hämta data just nu.
-            </p>
-          )}
+
+          <p className="mt-2 text-sm text-base-content/60">
+            Kunde inte hämta data just nu.
+          </p>
         </div>
+
         <Footer />
       </main>
     )
   }
 
-  const category = foundItem.category ?? foundItem.categoryName
-  const totalScore = parseNumber(foundItem.totalScore)
-  const reviewsCount = Math.round(parseNumber(foundItem.reviewsCount))
-  const clampedScore = Math.max(0, Math.min(5, totalScore))
-
-  const fullAddress = [
-    foundItem.street,
-    foundItem.city,
-    foundItem.state,
-    foundItem.countryCode,
-    foundItem.adress,
-  ]
-    .filter(Boolean)
-    .join(", ")
-
-  const mapQuery = fullAddress || foundItem.title || foundItem.city || "Sweden"
-
   return (
-    <main className="">
+    <main>
       <Header />
 
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -98,10 +50,13 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
             {/* Info card */}
             <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm p-6">
               <h1 className="text-2xl font-bold text-base-content">
-                {foundItem.title}
+                {itemVm.title}
               </h1>
-              {category && (
-                <p className="text-sm text-base-content/50 mt-1">{category}</p>
+
+              {itemVm.category && (
+                <p className="text-sm text-base-content/50 mt-1">
+                  {itemVm.category}
+                </p>
               )}
 
               {/* Rating */}
@@ -116,12 +71,16 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
                       >
                         <path d="M12 2l2.9 6.26L22 9.27l-5 5.14 1.18 7.09L12 18.77l-6.18 2.73L7 14.41 2 9.27l7.1-1.01L12 2z" />
                       </svg>
+
                       <div
                         className="absolute inset-0 overflow-hidden"
                         style={{
                           width: `${Math.max(
                             0,
-                            Math.min(100, (clampedScore - i) * 100)
+                            Math.min(
+                              100,
+                              (itemVm.clampedScore - i) * 100
+                            )
                           )}%`,
                         }}
                       >
@@ -136,39 +95,43 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
                     </div>
                   ))}
                 </div>
+
                 <span className="text-sm font-semibold text-base-content">
-                  {Math.round(totalScore)}
+                  {Math.round(itemVm.totalScore)}
                 </span>
+
                 <span className="text-sm text-base-content/50">
-                  ({reviewsCount})
+                  ({itemVm.reviewsCount})
                 </span>
               </div>
 
               {/* Address & phone */}
               <div className="mt-4 space-y-2 text-sm text-base-content/70">
-                {fullAddress && (
+                {itemVm.fullAddress && (
                   <div className="flex items-start gap-2">
-                    <span>{fullAddress}</span>
+                    <span>{itemVm.fullAddress}</span>
                   </div>
                 )}
 
                 <div className="flex items-center gap-2">
-                  {foundItem.phone ? (
+                  {itemVm.phone ? (
                     <a
-                      href={`tel:${foundItem.phone}`}
+                      href={`tel:${itemVm.phone}`}
                       className="hover:text-primary transition-colors"
                     >
-                      {foundItem.phone}
+                      {itemVm.phone}
                     </a>
                   ) : (
-                    <span className="text-base-content/60">Telefonnummer saknas</span>
+                    <span className="text-base-content/60">
+                      Telefonnummer saknas
+                    </span>
                   )}
                 </div>
 
-                {foundItem.website && (
+                {itemVm.website && (
                   <div className="flex items-center gap-2">
                     <a
-                      href={foundItem.website}
+                      href={itemVm.website}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="link link-primary text-sm"
@@ -180,95 +143,86 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
               </div>
             </div>
 
-            {/* Info + FAQ + Hours card */}
+            {/* Info + FAQ + Hours */}
             <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm divide-y divide-base-200">
-              {/* ── Overview ── */}
+              {/* Overview */}
               <div className="p-6">
                 <h2 className="text-base font-bold text-base-content mb-3">
-                  Om {foundItem.title}
+                  Om {itemVm.title}
                 </h2>
-            
 
                 <blockquote className="mt-4 pl-4 border-l-4 border-primary/30 text-sm italic text-base-content/60 leading-relaxed">
-                  {foundItem.title}. 
-                  {typeof totalScore === "number" && totalScore > 0
-                    ? `, betygsatt ${totalScore.toFixed(1)}.`
-                    : "."}
-                   {" "}Hitta
-                  öppettider, recensioner och kontaktuppgifter för{" "}
-                  {foundItem.title}.
+                  {itemVm.title}
+                  {itemVm.totalScore > 0
+                    ? `, betygsatt ${itemVm.totalScore.toFixed(1)}.`
+                    : "."}{" "}
+                  Hitta öppettider, recensioner och kontaktuppgifter för{" "}
+                  {itemVm.title}.
                 </blockquote>
               </div>
 
-              {/* ── FAQ ── */}
+              {/* FAQ */}
               <div className="p-6">
                 <h2 className="text-base font-bold text-base-content mb-4">
                   Vanliga frågor
                 </h2>
+
                 <div className="space-y-5">
                   <div>
                     <h3 className="text-sm font-semibold text-base-content mb-1">
-                      Vilka är öppettiderna på {foundItem.title}?
+                      Vilka är öppettiderna på {itemVm.title}?
                     </h3>
+
                     <p className="text-sm text-base-content/70 leading-relaxed">
-                      Dubbelkolla öppettiderna nedan för {foundItem.title} så att du
-                      kan planera ditt besök så att du och din hund hinner njuta av
-                      anläggningen.
+                      Dubbelkolla öppettiderna nedan för {itemVm.title}.
                     </p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-semibold text-base-content mb-1">
-                      Kostar det något att besöka {foundItem.title}?
+                      Kostar det något att besöka {itemVm.title}?
                     </h3>
+
                     <p className="text-sm text-base-content/70 leading-relaxed">
-                      Avgiftspolicyn på {foundItem.title} kan variera. Vissa
-                      parker erbjuder fri entré, medan andra tar ut en mindre
-                      avgift för underhåll.
-                      {foundItem.website ? (
-                        <>
-                          {" "}
-                          Kontrollera parkens webbplats eller kontakta dem
-                          direkt för aktuell prisinformation.
-                        </>
-                      ) : (
-                        " Kontakta parken direkt för aktuell prisinformation."
-                      )}
+                      Avgiftspolicyn på {itemVm.title} kan variera.
                     </p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-semibold text-base-content mb-1">
-                      Vilka faciliteter finns på {foundItem.title}?
+                      Vilka faciliteter finns på {itemVm.title}?
                     </h3>
+
                     <p className="text-sm text-base-content/70 leading-relaxed">
-                      {foundItem.title} kan erbjuda olika faciliteter för att
-                      göra ditt besök trevligare.
-                      Kontakta parken för fullständig information om
-                      tillgängliga faciliteter.
+                      Kontakta platsen för fullständig information om
+                      faciliteter.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* ── Hours (optional) ── */}
+              {/* Hours */}
               <div className="p-6">
                 <h2 className="text-base font-bold text-base-content mb-4">
-                  Öppettider – {foundItem.title}
+                  Öppettider – {itemVm.title}
                 </h2>
+
                 <table className="w-full text-sm">
                   <tbody className="divide-y divide-base-200">
                     {[
-                      ["Måndag", foundItem.hours?.monday],
-                      ["Tisdag", foundItem.hours?.tuesday],
-                      ["Onsdag", foundItem.hours?.wednesday],
-                      ["Torsdag", foundItem.hours?.thursday],
-                      ["Fredag", foundItem.hours?.friday],
-                      ["Lördag", foundItem.hours?.saturday],
-                      ["Söndag", foundItem.hours?.sunday],
+                      ["Måndag", itemVm.hours?.monday],
+                      ["Tisdag", itemVm.hours?.tuesday],
+                      ["Onsdag", itemVm.hours?.wednesday],
+                      ["Torsdag", itemVm.hours?.thursday],
+                      ["Fredag", itemVm.hours?.friday],
+                      ["Lördag", itemVm.hours?.saturday],
+                      ["Söndag", itemVm.hours?.sunday],
                     ].map(([label, value]) => (
                       <tr key={label}>
-                        <td className="py-1.5 text-base-content/70">{label}</td>
+                        <td className="py-1.5 text-base-content/70">
+                          {label}
+                        </td>
+
                         <td className="py-1.5 text-right font-medium text-base-content">
                           {value || "Öppet dygnet runt"}
                         </td>
@@ -277,18 +231,16 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
                   </tbody>
                 </table>
               </div>
-
-             
             </div>
           </div>
 
-          {/* RIGHT COLUMN — map */}
+          {/* RIGHT COLUMN */}
           <div className="w-full lg:w-[380px] shrink-0">
             <div className="bg-base-100 border border-base-200 rounded-2xl shadow-sm overflow-hidden sticky top-6">
               <iframe
                 title="Location Map"
                 src={`https://maps.google.com/maps?q=${encodeURIComponent(
-                  mapQuery,
+                  itemVm.mapQuery
                 )}&z=15&output=embed`}
                 width="100%"
                 height="300"
@@ -298,20 +250,24 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
                 referrerPolicy="no-referrer-when-downgrade"
                 className="w-full"
               />
+
               <div className="p-4">
-                {fullAddress && (
+                {itemVm.fullAddress && (
                   <>
                     <p className="text-sm font-medium text-base-content">
-                      {foundItem.street || foundItem.title}
+                      {itemVm.street || itemVm.title}
                     </p>
+
                     <p className="text-xs text-base-content/50 mt-0.5">
-                      {foundItem.city} {foundItem.state} {foundItem.countryCode}
+                      {itemVm.city} {itemVm.state}{" "}
+                      {itemVm.countryCode}
                     </p>
                   </>
                 )}
-                {foundItem.url && (
+
+                {itemVm.url && (
                   <a
-                    href={foundItem.url}
+                    href={itemVm.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 flex items-center justify-center gap-2 w-full rounded-xl bg-primary text-primary-content text-sm font-medium py-2.5 hover:opacity-90 transition-opacity"
@@ -324,11 +280,13 @@ export default async function ItemDetailPage({ params }: ItemDetailPageProps) {
           </div>
         </div>
       </div>
+
       <RecensionSystem
         userId={user?.id}
         userName={user?.user_metadata?.name ?? user?.email ?? null}
-        utegymName={foundItem.title ?? "Unknown utegym"}
+        utegymName={itemVm.title}
       />
+
       <Footer />
     </main>
   )

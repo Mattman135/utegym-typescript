@@ -8,7 +8,7 @@ export interface OpeningHours {
     sunday?: string
 }
   
-export interface dataItem {
+export interface DataItem {
     title?: string
     category?: string
     categoryName?: string
@@ -22,5 +22,29 @@ export interface dataItem {
     phone?: string
     website?: string
     url?: string
+    hours?: OpeningHours
+}
+
+export interface ItemDetailViewModel {
+    title: string
+
+    category: string | null
+
+    totalScore: number
+    reviewsCount: number
+    clampedScore: number
+
+    fullAddress: string
+    mapQuery: string
+
+    phone?: string
+    website?: string
+    url?: string
+
+    city?: string
+    state?: string
+    countryCode?: string
+    street?: string
+
     hours?: OpeningHours
 }
