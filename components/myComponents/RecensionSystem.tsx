@@ -1,56 +1,36 @@
 "use client"
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Heart, ThumbsDown, Camera, Star, Send, X, AlertCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from "react"
+import {
+  AlertCircle,
+  Camera,
+  Heart,
+  Send,
+  Star,
+  ThumbsDown,
+  X,
+} from "lucide-react"
 import { toast } from "react-hot-toast";
-import { createClient } from "@/libs/supabase/client";
+import {
+  createRecension,
+  loadRecensionsByUtegymName,
+} from "@/controllers/recension.controller"
+import {
+  getAverageRating,
+  getTimeAgo,
+  toggleRecensionLike,
+} from "@/services/recension.service"
+import type {
+  FormErrors,
+  NewRecensionInput,
+  Recension,
+  UserLike,
+} from "@/types/recension"
 
 interface RecensionSystemProps {
-  userId?: string;
-  userName?: string | null;
-  utegymName?: string;
-}
-
-type UserLike = 'like' | 'dislike' | null;
-
-interface Recension {
-  id: number;
-  userId: string;
-  userName: string;
-  userInitials: string;
-  rating: number;
-  title: string;
-  comment: string;
-  image: string | null;
-  createdAt: Date;
-  likes: number;
-  dislikes: number;
-  userLike: UserLike;
-}
-
-interface NewRecensionInput {
-  rating: number;
-  title: string;
-  comment: string;
-  imageFile: File | null;
-}
-
-interface FormErrors {
-  title?: string;
-  comment?: string;
-  image?: string;
-}
-
-interface ReviewRow {
-  id: number;
-  user_id: string;
-  user_name: string;
-  utegym_name: string;
-  review_title: string;
-  review_text: string;
-  photo_url: string | null;
-  rating: number;
-  created_at: string;
+  userId?: string
+  userName?: string | null
+  utegymName?: string
 }
 
 /**
@@ -59,7 +39,6 @@ interface ReviewRow {
  */
 export default function RecensionSystem({ userId, userName, utegymName }: RecensionSystemProps) {
   const isLoggedIn = Boolean(userId)
-  const supabase = useMemo(() => createClient(), []);
   const [recensions, setRecensions] = useState<Recension[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -67,146 +46,64 @@ export default function RecensionSystem({ userId, userName, utegymName }: Recens
 
   useEffect(() => {
     const loadReviews = async () => {
-      if (!utegymName) {
-        setRecensions([]);
-        setIsLoading(false);
-        return;
-      }
-
       setIsLoading(true);
-      const { data, error } = await supabase
-        .from("reviews")
-        .select("id, user_id, user_name, utegym_name, review_title, review_text, photo_url, rating, created_at")
-        .eq("utegym_name", utegymName)
-        .order("created_at", { ascending: false });
+      const { recensions: loadedRecensions, errorType } =
+        await loadRecensionsByUtegymName(utegymName)
 
-      if (error) {
+      if (errorType) {
         toast.error("Could not load reviews.");
         setIsLoading(false);
         return;
       }
 
-      const mapped = (data as ReviewRow[]).map((row) => ({
-        id: row.id,
-        userId: row.user_id,
-        userName: row.user_name,
-        userInitials: getInitials(row.user_name),
-        rating: row.rating,
-        title: row.review_title,
-        comment: row.review_text,
-        image: row.photo_url,
-        createdAt: new Date(row.created_at),
-        likes: 0,
-        dislikes: 0,
-        userLike: null as UserLike,
-      }));
-
-      setRecensions(mapped);
+      setRecensions(loadedRecensions);
       setIsLoading(false);
     };
 
     void loadReviews();
-  }, [utegymName, supabase]);
+  }, [utegymName]);
 
   const handleAddRecension = async (newRecension: NewRecensionInput) => {
-    if (!isLoggedIn || !userId || !userName) {
-      toast.error("Please log in to write reviews.");
-      return;
-    }
-    if (!utegymName) {
-      toast.error("Missing utegym name.");
-      return;
-    }
+    const { recension, errorType } = await createRecension({
+      input: newRecension,
+      userId,
+      userName,
+      utegymName,
+    })
 
-    const safeUserName = userName.trim() || "Anonymous User";
-
-    let photoUrl: string | null = null;
-    if (newRecension.imageFile) {
-      const extension = newRecension.imageFile.name.split(".").pop() ?? "jpg";
-      const filePath = `${userId}/${Date.now()}-${crypto.randomUUID()}.${extension}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("review-photos")
-        .upload(filePath, newRecension.imageFile);
-
-      if (uploadError || !uploadData) {
+    if (errorType) {
+      if (errorType === "NOT_LOGGED_IN") {
+        toast.error("Please log in to write reviews.");
+        return;
+      }
+      if (errorType === "MISSING_UTEGYM_NAME") {
+        toast.error("Missing utegym name.");
+        return;
+      }
+      if (errorType === "PHOTO_UPLOAD_FAILED") {
         toast.error("Could not upload review photo.");
         return;
       }
-
-      const { data: publicUrlData } = supabase.storage.from("review-photos").getPublicUrl(uploadData.path);
-      photoUrl = publicUrlData.publicUrl;
-    }
-
-    const { data, error } = await supabase
-      .from("reviews")
-      .insert({
-        user_id: userId,
-        user_name: safeUserName,
-        utegym_name: utegymName,
-        review_title: newRecension.title,
-        review_text: newRecension.comment,
-        photo_url: photoUrl,
-        rating: newRecension.rating,
-      })
-      .select("id, user_id, user_name, utegym_name, review_title, review_text, photo_url, rating, created_at")
-      .single();
-
-    if (error || !data) {
       toast.error("Could not save review.");
       return;
     }
 
-    const row = data as ReviewRow;
-    const recension: Recension = {
-      id: row.id,
-      userId: row.user_id,
-      userName: row.user_name,
-      userInitials: getInitials(row.user_name),
-      rating: row.rating,
-      title: row.review_title,
-      comment: row.review_text,
-      image: row.photo_url,
-      createdAt: new Date(row.created_at),
-      likes: 0,
-      dislikes: 0,
-      userLike: null,
-    };
-
+    if (!recension) {
+      toast.error("Could not save review.");
+      return;
+    }
     setRecensions((prev) => [recension, ...prev]);
     setShowForm(false);
     toast.success("Review posted.");
   };
 
   const handleToggleLike = (recensionId: number, action: Exclude<UserLike, null>) => {
-    setRecensions(recensions.map((r) => {
-      if (r.id !== recensionId) return r;
-      
-      const currentLike = r.userLike;
-      let newLikes = r.likes;
-      let newDislikes = r.dislikes;
-      let newUserLike: UserLike = null;
-
-      if (currentLike === action) {
-        // Toggle off the current action
-        if (action === 'like') newLikes -= 1;
-        if (action === 'dislike') newDislikes -= 1;
-      } else {
-        // Switch or add new action
-        if (currentLike === 'like') newLikes -= 1;
-        if (currentLike === 'dislike') newDislikes -= 1;
-        
-        if (action === 'like') newLikes += 1;
-        if (action === 'dislike') newDislikes += 1;
-        newUserLike = action;
-      }
-
-      return { ...r, likes: newLikes, dislikes: newDislikes, userLike: newUserLike };
-    }));
+    setRecensions((prev) =>
+      toggleRecensionLike(prev, recensionId, action),
+    )
   };
 
-  const averageRating = recensions.length > 0
-    ? (recensions.reduce((sum, r) => sum + r.rating, 0) / recensions.length).toFixed(1)
-    : '0.0';
+  const averageRating = getAverageRating(recensions)
   const averageRatingNumber = Number(averageRating);
 
   return (
@@ -550,32 +447,3 @@ function RecensionCard({ recension, onToggleLike, isOwnReview }: RecensionCardPr
   );
 }
 
-/**
- * Helper function to format time ago
- */
-function getTimeAgo(date: Date): string {
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (seconds < 60) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  if (days < 30) return `${Math.floor(days / 7)}w ago`;
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function getInitials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
