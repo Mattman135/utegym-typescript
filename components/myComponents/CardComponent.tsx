@@ -82,7 +82,7 @@ const CardComponent = ({ item }: CardComponentProps) => {
   const detailKey = title
 
   return (
-    <div className="card bg-base-100 w-96 shadow-sm group overflow-hidden">
+    <div className="card bg-base-100 w-96 shadow-sm group overflow-hidden m-4">
       {imageUrl && (
         <figure className="relative w-full h-48 overflow-hidden">
           <Image
